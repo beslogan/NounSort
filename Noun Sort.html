@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Noun Sort Game</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background-color: #f0f8ff;
+    }
+    .container {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 20px;
+    }
+    .category {
+        width: 22%;
+        min-height: 200px;
+        border: 3px dashed #555;
+        border-radius: 10px;
+        padding: 10px;
+        background-color: #fff;
+    }
+    .items { margin-top: 20px; }
+    .item {
+        display: inline-block;
+        margin: 10px;
+        cursor: grab;
+        text-align: center;
+    }
+    .emoji {
+        font-size: 38px;
+    }
+    .label {
+        font-size: 14px;
+    }
+    .correct { background-color: #c8f7c5; }
+    .wrong { background-color: #f7c5c5; }
+</style>
+</head>
+<body>
+
+<h1>Noun Sort Game</h1>
+<p>Drag each picture to the correct group!</p>
+
+<div class="container">
+    <div class="category" data-type="person"><h2>Person</h2></div>
+    <div class="category" data-type="place"><h2>Place</h2></div>
+    <div class="category" data-type="animal"><h2>Animal</h2></div>
+    <div class="category" data-type="thing"><h2>Thing</h2></div>
+</div>
+
+<div class="items" id="items"></div>
+<button onclick="resetGame()">Play Again</button>
+
+<script>
+const data = [
+{emoji:"👨‍🚒", word:"fireman", type:"person"},
+{emoji:"👩‍🏫", word:"teacher", type:"person"},
+{emoji:"👮", word:"police officer", type:"person"},
+{emoji:"👨", word:"man", type:"person"},
+{emoji:"👩", word:"woman", type:"person"},
+
+{emoji:"🏫", word:"school", type:"place"},
+{emoji:"🏠", word:"house", type:"place"},
+{emoji:"🏥", word:"hospital", type:"place"},
+{emoji:"🏖️", word:"beach", type:"place"},
+{emoji:"🏕️", word:"camp", type:"place"},
+
+{emoji:"🐨", word:"koala", type:"animal"},
+{emoji:"🐶", word:"dog", type:"animal"},
+{emoji:"🐱", word:"cat", type:"animal"},
+{emoji:"🐸", word:"frog", type:"animal"},
+{emoji:"🐵", word:"monkey", type:"animal"},
+
+{emoji:"⚾", word:"baseball", type:"thing"},
+{emoji:"🚗", word:"car", type:"thing"},
+{emoji:"🍎", word:"apple", type:"thing"},
+{emoji:"📚", word:"books", type:"thing"},
+{emoji:"🧸", word:"teddy bear", type:"thing"}
+];
+
+const itemsDiv = document.getElementById("items");
+
+function loadItems() {
+    itemsDiv.innerHTML = "";
+    data.sort(() => Math.random() - 0.5);
+
+    data.forEach((item, index) => {
+        let div = document.createElement("div");
+        div.className = "item";
+        div.draggable = true;
+        div.dataset.type = item.type;
+        div.dataset.word = item.word;
+        div.id = "item" + index;
+
+        div.innerHTML = `
+            <div class="emoji">${item.emoji}</div>
+            <div class="label">${item.word}</div>
+        `;
+
+        div.addEventListener("dragstart", drag);
+        itemsDiv.appendChild(div);
+    });
+}
+
+function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+}
+
+document.querySelectorAll(".category").forEach(cat => {
+    cat.addEventListener("dragover", ev => ev.preventDefault());
+    cat.addEventListener("drop", drop);
+});
+
+function drop(ev) {
+    ev.preventDefault();
+    let id = ev.dataTransfer.getData("text");
+    let item = document.getElementById(id);
+    let category = ev.target.closest(".category");
+
+    if (item.dataset.type === category.dataset.type) {
+        category.appendChild(item);
+        item.classList.add("correct");
+
+        let word = item.dataset.word;
+        let type = item.dataset.type;
+
+        speak(word + " is a " + type);
+
+    } else {
+        item.classList.add("wrong");
+        speak("Try again");
+        setTimeout(() => item.classList.remove("wrong"), 800);
+    }
+}
+
+function speak(text) {
+    let msg = new SpeechSynthesisUtterance(text);
+    msg.rate = 0.85;
+    msg.pitch = 1.1;
+    window.speechSynthesis.cancel(); // prevents overlap
+    window.speechSynthesis.speak(msg);
+}
+
+function resetGame() {
+    document.querySelectorAll(".category").forEach(cat => {
+        cat.innerHTML = "<h2>" + cat.dataset.type.charAt(0).toUpperCase() + cat.dataset.type.slice(1) + "</h2>";
+    });
+    loadItems();
+}
+
+loadItems();
+</script>
+
+</body>
+</html>
